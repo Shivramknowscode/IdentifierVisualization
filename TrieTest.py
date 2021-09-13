@@ -1,9 +1,11 @@
 from typing import Tuple
 
 from spiral import ronin
-for s in [ 'mStartCData', 'nonnegativedecimaltype', 'getUtf8Octets',
-'savefileas', 'nbrOfbugs']:
+
+for s in ['mStartCData', 'nonnegativedecimaltype', 'getUtf8Octets',
+          'savefileas', 'nbrOfbugs']:
     print(ronin.split(s))
+
 
 class TrieNode(object):
     """
@@ -42,7 +44,7 @@ def add(root, word: str):
         node.children.append(new_node)
         # And then point node to the new child
         node = new_node
-# Everything finished. Mark it as the end of a word.
+    # Everything finished. Mark it as the end of a word.
     node.word_finished = True
 
 
@@ -85,7 +87,6 @@ if __name__ == "__main__":
     add(root, 'People')
     add(root, 'Special')
     add(root, 'Not')
-
 
     print(find_prefix(root, 'make'))
     print(find_prefix(root, 'People'))
@@ -171,7 +172,11 @@ if __name__ == "__main__":
     root = TrieNode('*')
     add(root, ['hack', 'Athon'])
     add(root, ['hack', 'er'])
+    add(root, [ronin.split(s)])
 
     print(find_prefix(root, ['hack', 'Athon']))
     print(find_prefix(root, ['hack']))
     print(find_prefix(root, ['hack', 'er']))
+    print(find_prefix(root, ['hack', 'er']))
+    print(find_prefix(root, [ronin.split(s)]))
+
