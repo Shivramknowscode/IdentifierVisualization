@@ -40,7 +40,7 @@ def add(root, word: str):
 def find_prefix(root, word: str) -> Tuple[bool, int]:
     """
     Check and return
-      1. If the prefix exsists in any of the words we added so far
+      1. If the prefix exists in any of the words we added so far
       2. If yes then how may words actually have the prefix
     """
 
@@ -74,7 +74,7 @@ def draw(graph, parent_name, child_name):
     edge = pydot.Edge(parent_name, child_name)
     graph.add_edge(edge)
 
-# recursive function to convert tirenode to pydot graph
+# recursive function to convert trienode to pydot graph
 def trienode2graph(root, graph):
     for child in root.children:
         # set edge from root to child
@@ -85,7 +85,7 @@ def trienode2graph(root, graph):
 
 if __name__ == "__main__":
     root = TrieNode('*')
-    for words in ['mStartCData', 'mStartDData', 'nonnegativedecimaltype', 'getUtf8Octets',
+    for words in ['mStartCData', 'mStartDData', 'nonnegativedecimaltype','nonnegativePositiveNumbers', 'getUtf8Octets',
               'savefileas', 'nbrOfbugs']:
         node = root
         for word in ronin.split(words):
