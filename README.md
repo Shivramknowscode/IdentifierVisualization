@@ -1,4 +1,4 @@
-NameSplitter
+###### **NameSplitter**
 
 Namesplitter is a project that helps visualize Identifier names. The goal of the project is to identify meaningful relationships between identifier names.
 
@@ -7,8 +7,8 @@ Frameworks we're using so far:
 2. Plotly with Dash - for Visualization
 
 
-Author:
+**Author:**
 Shivram Mahendran
 
-Mentor:
+**Mentor:**
 Dr. Christian Newman
