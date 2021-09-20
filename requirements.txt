@@ -5,3 +5,5 @@ setuptools>=38.5.1
 six>=1.11.0
 plac>=0.9.6
 pytest>=3.0.5
+gensim
+pandas
