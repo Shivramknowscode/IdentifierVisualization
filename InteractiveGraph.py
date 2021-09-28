@@ -2,6 +2,7 @@ import igraph
 from igraph import Graph, EdgeSeq
 import plotly.graph_objects as go
 
+
 nr_vertices = 25
 v_label = list(map(str, range(nr_vertices)))
 G = Graph.Tree(nr_vertices, 2) # 2 stands for children number
@@ -35,9 +36,9 @@ fig.add_trace(go.Scatter(x=Xe,
 fig.add_trace(go.Scatter(x=Xn,
                   y=Yn,
                   mode='markers',
-                  name='bla',
+                  name='Words',
                   marker=dict(symbol='circle-dot',
-                                size=18,
+                                size=24,
                                 color='#6175c1',    #'#DB4551',
                                 line=dict(color='rgb(50,50,50)', width=1)
                                 ),
