@@ -2,13 +2,17 @@ from typing import Tuple
 from spiral import ronin
 from igraph import Graph, EdgeSeq, plot
 import plotly.graph_objects as go
+
 fig = go.Figure()
 import csv
-import pandas as pd
 import dash
+from dash.dependencies import Input, Output
 from dash import dcc
 from dash import html
+import json
+import pandas as pd
 import plotly.express as px
+
 
 class TrieNode(object):
     """
@@ -113,7 +117,6 @@ def plot_graph(graph, text):
         Xe += [position[edge[0]][0], position[edge[1]][0], None]
         Ye += [2 * M - position[edge[0]][1], 2 * M - position[edge[1]][1], None]
 
-    fig = go.Figure()
     fig.add_trace(go.Scatter(x=Xe,
                              y=Ye,
                              mode='lines',
@@ -125,7 +128,7 @@ def plot_graph(graph, text):
                              mode='markers',
                              name='Words',
                              marker=dict(symbol='circle-dot',
-                                         size=80,
+                                         size=25,
                                          color='#6175c1',  # '#DB4551',
                                          line=dict(color='rgb(50,50,50)', width=1)
                                          ),
@@ -134,7 +137,7 @@ def plot_graph(graph, text):
                              opacity=0.8
                              ))
 
-    def make_annotations(pos, text, font_size=18, font_color='rgb(250,250,250)'):
+    def make_annotations(pos, text, font_size=8, font_color='rgb(250,250,250)'):
         L = len(pos)
         if len(text) != L:
             raise ValueError('The lists pos and text must have the same len')
@@ -158,24 +161,60 @@ def plot_graph(graph, text):
 
     fig.update_layout(title='NameSplitter Binary Tree',
                       annotations=make_annotations(position, text),
-                      font_size=12,
+                      font_size=16,
                       showlegend=False,
                       xaxis=axis,
                       yaxis=axis,
-                      margin=dict(l=40, r=40, b=85, t=100),
+                      margin_autoexpand=True,
                       hovermode='closest',
+                      clickmode='event+select',
                       plot_bgcolor='rgb(248,248,248)',
+                      width=1920,
+                      height=1080
                       # dragmode='select'
                       )
+
+    # fig.update_traces(
+    #     line=dict(dash="dot", width=4),
+    #     selector=dict(type="scatter", mode="lines"))
+
+    # scatter = fig.data[0]
+    #
+    # def update_point(trace, points, selector):
+    #     c = list(scatter.marker.color)
+    #     s = list(scatter.marker.size)
+    #     for i in points.point_inds:
+    #         c[i] = '#bae2be'
+    #         s[i] = 20
+    #         with fig.batch_update():
+    #             scatter.marker.color = c
+    #             scatter.marker.size = s
+    #
+    # scatter.on_click(update_point)
+    # fig.update_traces(marker=dict(color="RoyalBlue"))
+
+    fig.update_yaxes(automargin=True)
+    fig.update_xaxes(automargin=True)
     fig.show()
 
 
 app = dash.Dash()
-app.layout = html.Div([
-    dcc.Graph(figure=fig)
-])
 
-app.run_server(debug=True, use_reloader=False)
+
+@app.callback(
+    Output('click-data', 'children'),
+    Input('basic-interactions', 'clickData'))
+# def update_points(clickData):
+#     return json.dumps(clickData, indent=2)
+
+def update_points(clickData):
+    fig.up
+    return fig
+
+app.layout = html.Div([
+    dcc.Graph(figure=fig,
+              id='basic-interactions')
+])
 
 filename = open('training_data.csv', 'r')
 
@@ -189,15 +228,16 @@ words1 = []
 # fig = px.pie(dfb, values='IDENTIFIER', names='IDENTIFIER')
 # fig.show()
 
+
 for col in file:
     words1.append(col['IDENTIFIER'])
 
-if __name__ == '__main__':
-    root = TrieNode('*')
-    for words in words1:
-        node = root
-        for word in ronin.split(words):
-            node = add(node, word)
+root = TrieNode('*')
+for words in words1:
+    node = root
+    for word in ronin.split(words):
+        node = add(node, word)
 
-    graph, labels = build_graph(root)
-    plot_graph(graph, list(labels.keys()))
+graph, labels = build_graph(root)
+plot_graph(graph, list(labels.keys()))
+app.run_server(debug=True, use_reloader=True)
