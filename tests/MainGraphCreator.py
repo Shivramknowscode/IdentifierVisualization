@@ -201,9 +201,9 @@ def plot_graph(graph, text):
 app = dash.Dash()
 
 
-@app.callback(
-    Output('click-data', 'children'),
-    Input('basic-interactions', 'clickData'))
+# @app.callback(
+#     Output('click-data', 'children'),
+#     Input('basic-interactions', 'clickData'))
 # def update_points(clickData):
 #     return json.dumps(clickData, indent=2)
 
@@ -211,16 +211,59 @@ def update_points(clickData):
     fig.up
     return fig
 
-app.layout = html.Div([
-    dcc.Graph(figure=fig,
-              id='basic-interactions')
-])
 
-filename = open('training_data.csv', 'r')
+app.layout = html.Div(
 
-file = csv.DictReader(filename)
+    [
 
-words1 = []
+        # html.Div(
+        #     [
+        #         dcc.Input(
+        #             id="input_{}".format(_),
+        #             type=_,
+        #             placeholder="input type {}".format(_),
+        #         )
+        #         for _ in ALLOWED_TYPES
+        #     ]
+        #     + [html.Div(id="out-all-types")]
+        # ),
+
+        html.Div([
+            html.Div(dcc.Input(id='input-box', type='text')),
+            html.Button('Submit', id='button'),
+            html.Div(id='output-container-button',
+                     children='Enter a value and press submit')
+        ]),
+
+        html.Div(
+            [
+                dcc.Graph(figure=fig,
+                          id='basic-interactions')
+
+            ])
+    ])
+
+
+# app.layout = html.Div(
+#     [
+#         dcc.Input(
+#             id="input_{}".format(_),
+#             type=_,
+#             placeholder="input type {}".format(_),
+#         )
+#         for _ in ALLOWED_TYPES
+#     ]
+#     + [html.Div(id="out-all-types")]
+# )
+
+
+# @app.callback(
+#     Output("out-all-types", "children"),
+#     [Input("input_{}".format(_), "value") for _ in ALLOWED_TYPES],
+# )
+# def cb_render(*vals):
+#     return " | ".join((str(val) for val in vals if val))
+
 
 # pandas data frame
 # dfb = pd.read_csv("training_data.csv")
@@ -229,15 +272,129 @@ words1 = []
 # fig.show()
 
 
+def update_graph(graph, text):
+    nr_vertices = len(labels)
+    lay = graph.layout('rt')
+
+    position = {k: lay[k] for k in range(nr_vertices)}
+    Y = [lay[k][1] for k in range(nr_vertices)]
+    M = max(Y)
+
+    E = [e.tuple for e in graph.es]  # list of edges
+
+    L = len(position)
+    Xn = [position[k][0] for k in range(L)]
+    Yn = [2 * M - position[k][1] for k in range(L)]
+    Xe = []
+    Ye = []
+    for edge in E:
+        Xe += [position[edge[0]][0], position[edge[1]][0], None]
+        Ye += [2 * M - position[edge[0]][1], 2 * M - position[edge[1]][1], None]
+
+    fig.update_traces(go.Scatter(x=Xe,
+                             y=Ye,
+                             mode='lines',
+                             line=dict(color='rgb(210,210,210)', width=1),
+                             hoverinfo='none'
+                             ))
+    fig.update_traces(go.Scatter(x=Xn,
+                             y=Yn,
+                             mode='markers',
+                             name='Words',
+                             marker=dict(symbol='circle-dot',
+                                         size=25,
+                                         color='#6175c1',  # '#DB4551',
+                                         line=dict(color='rgb(50,50,50)', width=1)
+                                         ),
+                             text=text,
+                             hoverinfo='text',
+                             opacity=0.8
+                             ))
+
+    def make_annotations(pos, text, font_size=8, font_color='rgb(250,250,250)'):
+        L = len(pos)
+        if len(text) != L:
+            raise ValueError('The lists pos and text must have the same len')
+        annotations = []
+        for k in range(L):
+            annotations.append(
+                dict(
+                    text=text[k],  # or replace labels with a different list for the text within the circle
+                    x=pos[k][0], y=2 * M - position[k][1],
+                    xref='x1', yref='y1',
+                    font=dict(color=font_color, size=font_size),
+                    showarrow=False)
+            )
+        return annotations
+
+    axis = dict(showline=False,  # hide axis line, grid, ticklabels and  title
+                zeroline=False,
+                showgrid=False,
+                showticklabels=False,
+                )
+
+    fig.update_layout(title='NameSplitter Binary Tree',
+                      annotations=make_annotations(position, text),
+                      font_size=16,
+                      showlegend=False,
+                      xaxis=axis,
+                      yaxis=axis,
+                      margin_autoexpand=True,
+                      hovermode='closest',
+                      clickmode='event+select',
+                      plot_bgcolor='rgb(248,248,248)',
+                      width=1920,
+                      height=1080
+                      # dragmode='select'
+                      )
+
+    fig.update_yaxes(automargin=True)
+    fig.update_xaxes(automargin=True)
+    fig.show()
+
+
+filename = open('training_data.csv', 'r')
+file = csv.DictReader(filename)
+words1 = []
 for col in file:
     words1.append(col['IDENTIFIER'])
 
-root = TrieNode('*')
-for words in words1:
-    node = root
-    for word in ronin.split(words):
-        node = add(node, word)
+# root = TrieNode('*')
+# for words in words1:
+#     node = root
+#     for word in ronin.split(words):
+#         node = add(node, word)
+#
+# graph, labels = build_graph(root)
+# plot_graph(graph, list(labels.keys()))
 
-graph, labels = build_graph(root)
-plot_graph(graph, list(labels.keys()))
+
+def createGraphFromWord(nodeName):
+    flag = False
+    root = TrieNode(nodeName)
+    for words in words1:
+        node = root
+        for word in ronin.split(words):
+            node = add(node, word)
+            if flag:
+                node == add(node, word)
+            if word == nodeName:
+                flag = True
+
+    graph, labels = build_graph(root)
+    plot_graph(graph, list(labels.keys()))
+
+
+@app.callback(
+    dash.dependencies.Output('output-container-button', 'children'),
+    [dash.dependencies.Input('button', 'n_clicks')],
+    [dash.dependencies.State('input-box', 'value')])
+def update_output(n_clicks, value):
+    createGraphFromWord(value)
+    return 'The input value was "{}" and the button has been clicked {} times'.format(
+        value,
+        n_clicks
+    )
+
+
 app.run_server(debug=True, use_reloader=True)

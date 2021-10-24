@@ -84,9 +84,10 @@ def trienode2graph(root, graph):
 
 
 if __name__ == "__main__":
-    root = TrieNode('*')
+    # root = TrieNode('*')
     for words in ['mStartCData', 'mStartDData', 'nonnegativedecimaltype','nonnegativePositiveNumbers', 'getUtf8Octets',
               'savefileas', 'nbrOfbugs']:
+        root = TrieNode(words[0])
         node = root
         for word in ronin.split(words):
             node = add(node, word)
