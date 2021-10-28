@@ -92,8 +92,8 @@ def trienode2graph(root, graph, labels):
 
 def build_graph(root):
     graph = Graph()
-    labels = {'*': 0}  # dictionary:
-    graph.add_vertices(4)
+    labels = {root.word: 0}  # dictionary:
+    graph.add_vertices(1)
     trienode2graph(root, graph, labels)
     return graph, labels
 
@@ -116,7 +116,8 @@ def plot_graph(graph, text):
     for edge in E:
         Xe += [position[edge[0]][0], position[edge[1]][0], None]
         Ye += [2 * M - position[edge[0]][1], 2 * M - position[edge[1]][1], None]
-
+    fig.data = []
+    fig.layout = {}
     fig.add_trace(go.Scatter(x=Xe,
                              y=Ye,
                              mode='lines',
@@ -369,18 +370,33 @@ for col in file:
 # plot_graph(graph, list(labels.keys()))
 
 
+# def createGraphFromWord(queryWord):
+#     root = TrieNode(queryWord)
+#     for identifier in identifiers:
+#         splitIdentifier = ronin.split(identifier)
+#         if queryWord != splitIdentifier[0]:
+#             break
+#
+#         node = root
+#         for word in splitIdentifier:
+#             node = add(node, word)
+#
+#     graph, labels = build_graph(root)
+#     plot_graph(graph, list(labels.keys()))
+def find_node(root, queryWord):
+    if root.word == queryWord:
+        return root
+    for child in root.children:
+        node = find_node(child, queryWord)
+        if node is not None:
+            return node
+    return None
+
 def createGraphFromWord(queryWord):
-    root = TrieNode(queryWord)
-    for identifier in identifiers:
-        splitIdentifier = ronin.split(identifier)
-        if queryWord != splitIdentifier[0]:
-            break
-
-        node = root
-        for word in splitIdentifier:
-            node = add(node, word)
-
-    graph, labels = build_graph(root)
+    node = find_node(main_root, queryWord)
+    if node is None:
+        return
+    graph, labels = build_graph(node)
     plot_graph(graph, list(labels.keys()))
 
 
@@ -395,5 +411,10 @@ def update_output(n_clicks, value):
         n_clicks
     )
 
+main_root = TrieNode('*')
+for splitIdentifier in identifiers:
+    node = main_root
+    for word in ronin.split(splitIdentifier):
+        node = add(node, word)
 
 app.run_server(debug=True, use_reloader=True)
