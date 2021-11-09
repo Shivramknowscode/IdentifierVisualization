@@ -128,8 +128,8 @@ def plot_graph(graph, text):
                              y=Yn,
                              mode='markers',
                              name='Words',
-                             marker=dict(symbol='circle-dot',
-                                         size=25,
+                             marker=dict(symbol='circle',
+                                         size=50,
                                          color='#6175c1',  # '#DB4551',
                                          line=dict(color='rgb(50,50,50)', width=1)
                                          ),
@@ -213,6 +213,20 @@ def update_points(clickData):
     return fig
 
 
+filename = open('training_data.csv', 'r')
+file = csv.DictReader(filename)
+identifiers = []
+for col in file:
+    identifiers.append(col['IDENTIFIER'])
+
+split_identifiers = [x.split()[0] for x in identifiers]
+
+first_words = []
+
+for i in split_identifiers:
+    if i not in first_words:
+        first_words.append(i)
+
 app.layout = html.Div(
 
     [
@@ -236,6 +250,40 @@ app.layout = html.Div(
                      children='Enter a value and press submit')
         ]),
 
+        html.Div([
+            dcc.Dropdown(
+                id='select_identifier',
+                options=[
+                    {'label': i, 'value': i} for i in first_words
+
+                ],
+                value='Identifier Names'
+            )
+        ]),
+
+        html.Div([
+            dcc.Upload(
+                id='upload-data',
+                children=html.Div([
+                    'Drag and Drop or ',
+                    html.A('Select Files')
+                ]),
+                style={
+                    'width': '100%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    'margin': '10px'
+                },
+                # Allow multiple files to be uploaded
+                multiple=False
+            ),
+            html.Div(id='output-data-upload'),
+        ]),
+
         html.Div(
             [
                 dcc.Graph(figure=fig,
@@ -243,6 +291,7 @@ app.layout = html.Div(
 
             ])
     ])
+
 
 # app.layout = html.Div(
 #     [
@@ -353,13 +402,6 @@ app.layout = html.Div(
 #     fig.show()
 
 
-filename = open('training_data.csv', 'r')
-file = csv.DictReader(filename)
-identifiers = []
-for col in file:
-    identifiers.append(col['IDENTIFIER'])
-
-
 # root = TrieNode('*')
 # for words in words1:
 #     node = root
@@ -392,6 +434,7 @@ def find_node(root, queryWord):
             return node
     return None
 
+
 def createGraphFromWord(queryWord):
     node = find_node(main_root, queryWord)
     if node is None:
@@ -410,6 +453,7 @@ def update_output(n_clicks, value):
         value,
         n_clicks
     )
+
 
 main_root = TrieNode('*')
 for splitIdentifier in identifiers:
