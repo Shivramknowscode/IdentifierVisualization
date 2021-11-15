@@ -1,3 +1,7 @@
+import base64
+import datetime
+import io
+
 from typing import Tuple
 from spiral import ronin
 from igraph import Graph, EdgeSeq, plot
@@ -6,12 +10,13 @@ import plotly.graph_objects as go
 fig = go.Figure()
 import csv
 import dash
-from dash.dependencies import Input, Output
-from dash import dcc
+from dash.dependencies import Input, Output, State
+from dash import dcc, callback_context
 from dash import html
 import json
 import pandas as pd
 import plotly.express as px
+from dash import dash_table
 
 
 class TrieNode(object):
@@ -213,54 +218,31 @@ def update_points(clickData):
     return fig
 
 
-filename = open('training_data.csv', 'r')
-file = csv.DictReader(filename)
-identifiers = []
-for col in file:
-    identifiers.append(col['IDENTIFIER'])
-
-split_identifiers = [x.split()[0] for x in identifiers]
-
 first_words = []
+identifiers = []
 
-for i in split_identifiers:
-    if i not in first_words:
-        first_words.append(i)
 
-app.layout = html.Div(
+def set_csv(userUploadedFile):
+    filename = open(userUploadedFile, 'r')
+    file = csv.DictReader(filename)
 
-    [
+    for col in file:
+        identifiers.append(col['IDENTIFIER'])
 
-        # html.Div(
-        #     [
-        #         dcc.Input(
-        #             id="input_{}".format(_),
-        #             type=_,
-        #             placeholder="input type {}".format(_),
-        #         )
-        #         for _ in ALLOWED_TYPES
-        #     ]
-        #     + [html.Div(id="out-all-types")]
-        # ),
+    split_identifiers = [x.split()[0] for x in identifiers]
 
-        html.Div([
-            html.Div(dcc.Input(id='input-box', type='text')),
-            html.Button('Submit', id='button'),
-            html.Div(id='output-container-button',
-                     children='Enter a value and press submit')
-        ]),
+    for i in split_identifiers:
+        if i not in first_words:
+            first_words.append(i)
 
-        html.Div([
-            dcc.Dropdown(
-                id='select_identifier',
-                options=[
-                    {'label': i, 'value': i} for i in first_words
 
-                ],
-                value='Identifier Names'
-            )
-        ]),
-
+def dropbox_layout():
+    return html.Div([
+        dcc.Interval(
+            id='interval-component',
+            interval=10 * 1000,  # in milliseconds
+            n_intervals=0
+        ),
         html.Div([
             dcc.Upload(
                 id='upload-data',
@@ -279,152 +261,117 @@ app.layout = html.Div(
                     'margin': '10px'
                 },
                 # Allow multiple files to be uploaded
-                multiple=False
+                multiple=True
             ),
             html.Div(id='output-data-upload'),
+        ])
+    ])
+
+
+def input_menu_layout():
+    return html.Div([
+        dcc.Interval(
+            id='interval-component',
+            interval=1 * 1000,  # in milliseconds
+            n_intervals=0
+        ),
+        html.Div([
+            html.Div(dcc.Input(id='input-box', type='text')),
+            html.Button('Submit', id='button'),
+            html.Div(id='output-container-button',
+                     children='Enter a value and press submit')
         ]),
 
+        html.Div([
+            dcc.Dropdown(
+                id='select_identifier',
+                options=[
+                    {'label': i, 'value': i} for i in first_words
+
+                ],
+                value='Identifier Names'
+            ), html.Div(id='dd-output-container')
+        ])
+    ])
+
+
+def graph_layout():
+    return html.Div([
+        dcc.Interval(
+            id='interval-component',
+            interval=1 * 1000,  # in milliseconds
+            n_intervals=0
+        ),
         html.Div(
             [
                 dcc.Graph(figure=fig,
                           id='basic-interactions')
 
-            ])
+            ]),
+        html.Div([
+            html.Button('Back', id='btn-nclicks-1', n_clicks=0),
+            html.Div(id='container-button-timestamp')
+        ])
     ])
 
 
+app.layout = dropbox_layout
+
+
 # app.layout = html.Div(
+#
 #     [
-#         dcc.Input(
-#             id="input_{}".format(_),
-#             type=_,
-#             placeholder="input type {}".format(_),
-#         )
-#         for _ in ALLOWED_TYPES
-#     ]
-#     + [html.Div(id="out-all-types")]
-# )
+#
+#         html.Div([
+#             dcc.Upload(
+#                 id='upload-data',
+#                 children=html.Div([
+#                     'Drag and Drop or ',
+#                     html.A('Select Files')
+#                 ]),
+#                 style={
+#                     'width': '100%',
+#                     'height': '60px',
+#                     'lineHeight': '60px',
+#                     'borderWidth': '1px',
+#                     'borderStyle': 'dashed',
+#                     'borderRadius': '5px',
+#                     'textAlign': 'center',
+#                     'margin': '10px'
+#                 },
+#                 # Allow multiple files to be uploaded
+#                 multiple=True
+#             ),
+#             html.Div(id='output-data-upload'),
+#         ]),
+#
+#         html.Div([
+#             html.Div(dcc.Input(id='input-box', type='text')),
+#             html.Button('Submit', id='button'),
+#             html.Div(id='output-container-button',
+#                      children='Enter a value and press submit')
+#         ]),
+#
+#         html.Div([
+#             dcc.Dropdown(
+#                 id='select_identifier',
+#                 options=[
+#                     {'label': i, 'value': i} for i in first_words
+#
+#                 ],
+#                 value='Identifier Names'
+#             ), html.Div(id='dd-output-container')
+#         ]),
+#
+#         html.Div(
+#             [
+#                 dcc.Graph(figure=fig,
+#                           id='basic-interactions')
+#
+#             ])
+#     ])
 
 
-# @app.callback(
-#     Output("out-all-types", "children"),
-#     [Input("input_{}".format(_), "value") for _ in ALLOWED_TYPES],
-# )
-# def cb_render(*vals):
-#     return " | ".join((str(val) for val in vals if val))
-
-
-# pandas data frame
-# dfb = pd.read_csv("training_data.csv")
-# df = px.data.tips()
-# fig = px.pie(dfb, values='IDENTIFIER', names='IDENTIFIER')
-# fig.show()
-
-
-# def update_graph(graph, text):
-#     nr_vertices = len(labels)
-#     lay = graph.layout('rt')
-#
-#     position = {k: lay[k] for k in range(nr_vertices)}
-#     Y = [lay[k][1] for k in range(nr_vertices)]
-#     M = max(Y)
-#
-#     E = [e.tuple for e in graph.es]  # list of edges
-#
-#     L = len(position)
-#     Xn = [position[k][0] for k in range(L)]
-#     Yn = [2 * M - position[k][1] for k in range(L)]
-#     Xe = []
-#     Ye = []
-#     for edge in E:
-#         Xe += [position[edge[0]][0], position[edge[1]][0], None]
-#         Ye += [2 * M - position[edge[0]][1], 2 * M - position[edge[1]][1], None]
-#
-#     fig.update_traces(go.Scatter(x=Xe,
-#                                  y=Ye,
-#                                  mode='lines',
-#                                  line=dict(color='rgb(210,210,210)', width=1),
-#                                  hoverinfo='none'
-#                                  ))
-#     fig.update_traces(go.Scatter(x=Xn,
-#                                  y=Yn,
-#                                  mode='markers',
-#                                  name='Words',
-#                                  marker=dict(symbol='circle-dot',
-#                                              size=25,
-#                                              color='#6175c1',  # '#DB4551',
-#                                              line=dict(color='rgb(50,50,50)', width=1)
-#                                              ),
-#                                  text=text,
-#                                  hoverinfo='text',
-#                                  opacity=0.8
-#                                  ))
-#
-#     def make_annotations(pos, text, font_size=8, font_color='rgb(250,250,250)'):
-#         L = len(pos)
-#         if len(text) != L:
-#             raise ValueError('The lists pos and text must have the same len')
-#         annotations = []
-#         for k in range(L):
-#             annotations.append(
-#                 dict(
-#                     text=text[k],  # or replace labels with a different list for the text within the circle
-#                     x=pos[k][0], y=2 * M - position[k][1],
-#                     xref='x1', yref='y1',
-#                     font=dict(color=font_color, size=font_size),
-#                     showarrow=False)
-#             )
-#         return annotations
-#
-#     axis = dict(showline=False,  # hide axis line, grid, ticklabels and  title
-#                 zeroline=False,
-#                 showgrid=False,
-#                 showticklabels=False,
-#                 )
-#
-#     fig.update_layout(title='NameSplitter Binary Tree',
-#                       annotations=make_annotations(position, text),
-#                       font_size=16,
-#                       showlegend=False,
-#                       xaxis=axis,
-#                       yaxis=axis,
-#                       margin_autoexpand=True,
-#                       hovermode='closest',
-#                       clickmode='event+select',
-#                       plot_bgcolor='rgb(248,248,248)',
-#                       width=1920,
-#                       height=1080
-#                       # dragmode='select'
-#                       )
-#
-#     fig.update_yaxes(automargin=True)
-#     fig.update_xaxes(automargin=True)
-#     fig.show()
-
-
-# root = TrieNode('*')
-# for words in words1:
-#     node = root
-#     for word in ronin.split(words):
-#         node = add(node, word)
-#
-# graph, labels = build_graph(root)
-# plot_graph(graph, list(labels.keys()))
-
-
-# def createGraphFromWord(queryWord):
-#     root = TrieNode(queryWord)
-#     for identifier in identifiers:
-#         splitIdentifier = ronin.split(identifier)
-#         if queryWord != splitIdentifier[0]:
-#             break
-#
-#         node = root
-#         for word in splitIdentifier:
-#             node = add(node, word)
-#
-#     graph, labels = build_graph(root)
-#     plot_graph(graph, list(labels.keys()))
 def find_node(root, queryWord):
     if root.word == queryWord:
         return root
@@ -446,13 +393,97 @@ def createGraphFromWord(queryWord):
 @app.callback(
     dash.dependencies.Output('output-container-button', 'children'),
     [dash.dependencies.Input('button', 'n_clicks')],
-    [dash.dependencies.State('input-box', 'value')])
+    [dash.dependencies.State('input-box', 'value')],
+    Input('interval-component', 'n_intervals'))
 def update_output(n_clicks, value):
     createGraphFromWord(value)
+    app.layout = graph_layout()
     return 'The input value was "{}" and the button has been clicked {} times'.format(
         value,
         n_clicks
     )
+
+
+@app.callback(
+    Output('dd-output-container', 'children'),
+    Input('select_identifier', 'value'),
+    Input('interval-component', 'n_intervals')
+)
+def update_output(value, n):
+    createGraphFromWord(value)
+    app.layout = graph_layout()
+    return 'You have selected "{}"'.format(value)
+
+
+def parse_contents(contents, filename, date):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            # Assume that the user uploaded a CSV file
+            set_csv(filename)
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+
+        elif 'xls' in filename:
+            # Assume that the user uploaded an excel file
+            set_csv(filename)
+            df = pd.read_excel(io.BytesIO(decoded))
+
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    return html.Div([
+        html.H5(filename),
+        html.H6(datetime.datetime.fromtimestamp(date)),
+
+        dash_table.DataTable(
+            data=df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in df.columns]
+        ),
+
+        html.Hr(),  # horizontal line
+
+        # For debugging, display the raw contents provided by the web browser
+        html.Div('Raw Content'),
+        html.Pre(contents[0:200] + '...', style={
+            'whiteSpace': 'pre-wrap',
+            'wordBreak': 'break-all'
+        })
+    ])
+
+
+@app.callback(Output('output-data-upload', 'children'),
+              Input('upload-data', 'contents'),
+              State('upload-data', 'filename'),
+              State('upload-data', 'last_modified'),
+              Input('interval-component', 'n_intervals'))
+def update_output(list_of_contents, list_of_names, list_of_dates, n):
+    if list_of_contents is not None:
+        children = [
+            parse_contents(c, n, d) for c, n, d in
+            zip(list_of_contents, list_of_names, list_of_dates)]
+        app.layout = input_menu_layout()
+        return children
+
+
+@app.callback(
+    Output('container-button-timestamp', 'children'),
+    Input('btn-nclicks-1', 'n_clicks'),
+    Input('interval-component', 'n_intervals')
+)
+def displayClick(btn1, n):
+    changed_id = [p['prop_id'] for p in callback_context.triggered][0]
+    if 'btn-nclicks-1' in changed_id:
+        app.layout = input_menu_layout()
+        msg = 'Going back....'
+    else:
+        msg = 'Not going back...'
+    return html.Div(msg)
 
 
 main_root = TrieNode('*')
@@ -461,4 +492,5 @@ for splitIdentifier in identifiers:
     for word in ronin.split(splitIdentifier):
         node = add(node, word)
 
-app.run_server(debug=True, use_reloader=True)
+if __name__ == '__main__':
+    app.run_server(debug=True, use_reloader=True)
