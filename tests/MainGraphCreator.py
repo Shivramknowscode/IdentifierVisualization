@@ -18,6 +18,15 @@ import pandas as pd
 import plotly.express as px
 from dash import dash_table
 
+external_scripts = [
+    'https://www.google-analytics.com/analytics.js',
+    {'src': '/Users/shivram/PycharmProjects/NameSplitter/spiral/tests/custom-script.js'},
+    {
+        'src': '/Users/shivram/PycharmProjects/NameSplitter/spiral/tests/custom-script.js',
+        'integrity': 'sha256-Qqd/EfdABZUcAxjOkMi8eGEivtdTkh3b65xCZL4qAQA=',
+        'crossorigin': 'anonymous'
+    }
+]
 
 class TrieNode(object):
     """
@@ -204,7 +213,8 @@ def plot_graph(graph, text):
     fig.show()
 
 
-app = dash.Dash()
+app = dash.Dash(__name__,
+                external_scripts=external_scripts)
 
 
 # @app.callback(
@@ -263,7 +273,7 @@ def dropbox_layout():
                 # Allow multiple files to be uploaded
                 multiple=True
             ),
-            html.Div(id='output-data-upload'),
+            html.Div(id='output-data-upload')
         ])
     ])
 
@@ -291,6 +301,7 @@ def input_menu_layout():
                 ],
                 value='Identifier Names'
             ), html.Div(id='dd-output-container')
+
         ])
     ])
 
@@ -494,3 +505,5 @@ for splitIdentifier in identifiers:
 
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader=True)
+
+
