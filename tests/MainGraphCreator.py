@@ -6,8 +6,6 @@ from typing import Tuple
 from spiral import ronin
 from igraph import Graph, EdgeSeq, plot
 import plotly.graph_objects as go
-
-fig = go.Figure()
 import csv
 import dash
 from dash.dependencies import Input, Output, State
@@ -17,6 +15,19 @@ import json
 import pandas as pd
 import plotly.express as px
 from dash import dash_table
+
+fig = go.Figure()
+# external_scripts =[]
+
+# [
+#     'https://www.google-analytics.com/analytics.js',
+#     {'src': '/Users/shivram/PycharmProjects/NameSplitter/spiral/tests/custom-script.js'},
+#     {
+#         'src': '/Users/shivram/PycharmProjects/NameSplitter/spiral/tests/custom-script.js',
+#         'integrity': 'sha256-Qqd/EfdABZUcAxjOkMi8eGEivtdTkh3b65xCZL4qAQA=',
+#         'crossorigin': 'anonymous'
+#     }
+# ]
 
 
 class TrieNode(object):
@@ -105,6 +116,8 @@ def build_graph(root):
 
 def plot_graph(graph, text):
     nr_vertices = len(text)
+    app.logger.info(text)
+    # nr_vertices = len(labels)
     lay = graph.layout('rt')
 
     position = {k: lay[k] for k in range(nr_vertices)}
@@ -121,8 +134,8 @@ def plot_graph(graph, text):
     for edge in E:
         Xe += [position[edge[0]][0], position[edge[1]][0], None]
         Ye += [2 * M - position[edge[0]][1], 2 * M - position[edge[1]][1], None]
-    fig.data = []
-    fig.layout = {}
+    # fig.data = []
+    # fig.layout = {}
     fig.add_trace(go.Scatter(x=Xe,
                              y=Ye,
                              mode='lines',
@@ -133,7 +146,7 @@ def plot_graph(graph, text):
                              y=Yn,
                              mode='markers',
                              name='Words',
-                             marker=dict(symbol='circle',
+                             marker=dict(symbol='circle-dot',
                                          size=50,
                                          color='#6175c1',  # '#DB4551',
                                          line=dict(color='rgb(50,50,50)', width=1)
@@ -204,7 +217,10 @@ def plot_graph(graph, text):
     fig.show()
 
 
-app = dash.Dash()
+app = dash.Dash(__name__)
+
+# ,
+# external_scripts=external_scripts)
 
 
 # @app.callback(
@@ -213,11 +229,6 @@ app = dash.Dash()
 # def update_points(clickData):
 #     return json.dumps(clickData, indent=2)
 
-def update_points(clickData):
-    fig.up
-    return fig
-
-
 first_words = []
 identifiers = []
 
@@ -225,7 +236,7 @@ identifiers = []
 def set_csv(userUploadedFile):
     filename = open(userUploadedFile, 'r')
     file = csv.DictReader(filename)
-
+    # app.logger.info(json.dumps(file))
     for col in file:
         identifiers.append(col['IDENTIFIER'])
 
@@ -234,6 +245,9 @@ def set_csv(userUploadedFile):
     for i in split_identifiers:
         if i not in first_words:
             first_words.append(i)
+
+    # app.logger.info(first_words)
+    # app.logger.info(identifiers)
 
 
 def dropbox_layout():
@@ -263,7 +277,7 @@ def dropbox_layout():
                 # Allow multiple files to be uploaded
                 multiple=True
             ),
-            html.Div(id='output-data-upload'),
+            html.Div(id='output-data-upload')
         ])
     ])
 
@@ -289,8 +303,9 @@ def input_menu_layout():
                     {'label': i, 'value': i} for i in first_words
 
                 ],
-                value='Identifier Names'
+                value='Identifier-Names'
             ), html.Div(id='dd-output-container')
+
         ])
     ])
 
@@ -384,6 +399,8 @@ def find_node(root, queryWord):
 
 def createGraphFromWord(queryWord):
     node = find_node(main_root, queryWord)
+    app.logger.info(main_root)
+    app.logger.info(queryWord)
     if node is None:
         return
     graph, labels = build_graph(node)
@@ -393,8 +410,8 @@ def createGraphFromWord(queryWord):
 @app.callback(
     dash.dependencies.Output('output-container-button', 'children'),
     [dash.dependencies.Input('button', 'n_clicks')],
-    [dash.dependencies.State('input-box', 'value')],
-    Input('interval-component', 'n_intervals'))
+    [dash.dependencies.State('input-box', 'value')])
+# Input('interval-component', 'n_intervals'))
 def update_output(n_clicks, value):
     createGraphFromWord(value)
     app.layout = graph_layout()
